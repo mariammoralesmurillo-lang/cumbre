@@ -1,0 +1,996 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Nos vemos en la cumbre</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800;900&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap">
+<style>
+/* Layout: pantalla única, mapa vertical desplazable + hoja inferior de acción.
+   Paleta tomada de las ilustraciones del taller: cielo diurno, bosque, páramo dorado, madera. */
+:root{
+  --cielo:#BFE6F7; --cielo-alto:#8FD2F0; --nube:#FFFFFF;
+  --bosque:#1F4D33; --verde:#3E7A46; --pasto:#8FB657; --pasto-claro:#A9CA6B;
+  --paramo:#C9A245; --paramo-osc:#9A7A2C;
+  --roca:#8A8A93; --roca-osc:#5E5E68;
+  --madera:#6E4420; --madera-clara:#96642F; --madera-borde:#4A2C14;
+  --rojo:#CE4436; --sol:#F6B13F; --cielo-alba:#F79A5B;
+  --tinta:#1C2024; --tinta-2:#4A525A; --papel:#FBF7EF; --papel-2:#F0E9DB;
+  --foco:#0B61A4;
+  --fd:'Nunito',system-ui,sans-serif;
+  --fb:'Atkinson Hyperlegible',Verdana,system-ui,sans-serif;
+  --e:1rem;               /* escala de texto, ajustable por la persona */
+  color-scheme:light;
+}
+/* Alto contraste: lo activa la persona desde el encabezado */
+:root[data-contraste="alto"]{
+  --tinta:#000000; --tinta-2:#1A1A1A; --papel:#FFFFFF; --papel-2:#FFFFFF;
+  --bosque:#0C3320; --verde:#1F5A2B; --madera:#4A2C14; --rojo:#A3160A;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:var(--papel); color:var(--tinta);
+  font-family:var(--fb); font-size:var(--e); line-height:1.6;
+  -webkit-text-size-adjust:100%;
+}
+body::before{content:"";position:fixed;top:0;left:0;right:0;height:env(safe-area-inset-top,0px);
+  z-index:30;background:var(--bosque)}
+.gutter{padding-left:max(16px,env(safe-area-inset-left,0px));
+        padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+/* ---------- Foco visible y movimiento reducido ---------- */
+/* el foco se ve también en navegadores sin :focus-visible (iOS 14 y anteriores) */
+:focus{outline:4px solid var(--foco);outline-offset:3px;border-radius:4px}
+:focus:not(:focus-visible){outline:none}
+:focus-visible{outline:4px solid var(--foco);outline-offset:3px;border-radius:4px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+
+.saltar{position:absolute;left:-9999px;top:0;background:var(--papel);color:var(--tinta);
+  padding:12px 18px;z-index:60;font-weight:700}
+.saltar:focus{left:8px;top:8px}
+
+/* ---------- Encabezado ---------- */
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:25;background:var(--bosque);
+  color:#fff;padding-block:8px}
+.hbar{max-width:720px;margin:0 auto;display:flex;align-items:center;flex-wrap:wrap}
+.hbar>*+*{margin-left:8px}
+.marca{font-family:var(--fd);font-weight:900;font-size:calc(var(--e)*.98);letter-spacing:-.01em;
+  margin-right:auto;min-width:0}
+.alt{font-family:var(--fb);font-weight:700;font-size:calc(var(--e)*.78);background:rgba(255,255,255,.18);
+  padding:4px 9px;border-radius:999px;white-space:nowrap}
+.ctrl{display:flex;margin-left:auto}
+.ctrl button+button{margin-left:6px}
+.ctrl button{min-width:46px;min-height:46px;background:rgba(255,255,255,.14);color:#fff;
+  border:2px solid rgba(255,255,255,.45);border-radius:10px;font-family:var(--fd);font-weight:800;
+  font-size:calc(var(--e)*.92);cursor:pointer}
+.ctrl button[aria-pressed="true"]{background:#fff;color:var(--bosque)}
+.nav{max-width:720px;margin:8px auto 0;display:flex;align-items:center}
+.nav button+button{margin-left:8px}
+.nav button{display:inline-flex;align-items:center;min-height:46px;padding:0 16px;
+  background:rgba(255,255,255,.16);color:#fff;border:2px solid rgba(255,255,255,.5);
+  border-radius:10px;font-family:var(--fb);font-weight:700;
+  font-size:calc(var(--e)*.9);cursor:pointer;max-width:48%}
+.nav button span:not(.flecha){overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nav .flecha{font-size:calc(var(--e)*1.15);line-height:1;flex:0 0 auto}
+#bAtras .flecha{margin-right:9px}
+#bAdelante .flecha{margin-left:9px}
+.nav button[hidden]{display:none!important}
+#bAdelante{margin-left:auto}
+
+/* ---------- Contenedor ---------- */
+main{max-width:720px;margin:0 auto;padding-block:22px 150px}
+.pant[hidden]{display:none!important}
+h1{font-family:var(--fd);font-weight:900;font-size:calc(var(--e)*2.1);line-height:1.1;
+  letter-spacing:-.02em;text-wrap:balance;margin-bottom:12px}
+h2{font-family:var(--fd);font-weight:900;font-size:calc(var(--e)*1.55);line-height:1.2;
+  text-wrap:balance;margin-bottom:10px}
+h3{font-family:var(--fd);font-weight:800;font-size:calc(var(--e)*1.15);margin-bottom:6px}
+p{margin-bottom:14px;max-width:62ch}
+.intro{font-size:calc(var(--e)*1.1)}
+.nota{color:var(--tinta-2);font-size:calc(var(--e)*.95)}
+
+/* ---------- Rótulo de madera (motivo repetido) ---------- */
+.rotulo{background:var(--madera);border:4px solid var(--madera-borde);border-radius:10px;
+  color:#fff;padding:14px 16px;box-shadow:0 5px 0 var(--madera-borde);margin-bottom:18px;
+  display:flex;align-items:center}
+.rotulo>*+*{margin-left:14px}
+.rotulo .placa{flex:0 0 auto;width:54px;height:54px;border-radius:50%;background:#fff;
+  border:4px solid var(--madera-borde);display:grid;place-items:center;
+  font-family:var(--fd);font-weight:900;font-size:calc(var(--e)*1.3);color:var(--madera)}
+.rotulo .tx{min-width:0}
+.rotulo .num{font-family:var(--fb);font-weight:700;font-size:calc(var(--e)*.8);
+  letter-spacing:.14em;text-transform:uppercase;color:#F2D9B4}
+.rotulo h2{color:#fff;margin:2px 0 0}
+
+/* ---------- Tarjetas ---------- */
+.caja{background:var(--papel-2);border:3px solid var(--tinta);border-radius:12px;
+  padding:18px;margin-bottom:16px}
+.caja.verde{background:#E7F2DC;border-color:var(--verde)}
+.caja.oro{background:#FBF0D4;border-color:var(--paramo-osc)}
+.caja .et{display:block;font-weight:700;font-size:calc(var(--e)*.82);letter-spacing:.1em;
+  text-transform:uppercase;color:var(--tinta-2);margin-bottom:8px}
+.caja p:last-child{margin-bottom:0}
+
+/* ---------- Controles ---------- */
+label{display:block;font-weight:700;font-size:calc(var(--e)*.95);margin-bottom:8px}
+input,textarea{width:100%;font-family:var(--fb);font-size:calc(var(--e)*1.15);
+  padding:14px;border:3px solid var(--tinta);border-radius:10px;background:#fff;color:var(--tinta);
+  min-height:56px;margin-bottom:6px}
+input[inputmode="numeric"]{text-align:center;font-weight:700;letter-spacing:.14em}
+textarea{min-height:120px;line-height:1.55}
+.btn{display:block;width:100%;min-height:60px;background:var(--rojo);color:#fff;border:3px solid #8E2A1F;
+  border-radius:12px;font-family:var(--fd);font-weight:900;font-size:calc(var(--e)*1.15);
+  padding:16px;cursor:pointer;box-shadow:0 4px 0 #8E2A1F;margin-bottom:12px}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #8E2A1F}
+.btn.sec{background:var(--papel);color:var(--tinta);border-color:var(--tinta);box-shadow:0 4px 0 var(--tinta)}
+.btn.sec:active{box-shadow:0 1px 0 var(--tinta)}
+.err{color:#9B1C0E;font-weight:700;min-height:1.6em;margin-bottom:8px}
+.ok{color:#1F5A2B;font-weight:700}
+
+/* ---------- Mapa ---------- */
+#mapaWrap{border:3px solid var(--tinta);border-radius:14px;background:var(--cielo);
+  margin-bottom:18px;height:min(46vh,430px);overflow-y:auto;overflow-x:hidden;
+  -webkit-overflow-scrolling:touch}
+#mapaSVG{display:block;width:100%;height:auto}
+.hito-txt{font-family:var(--fd);font-weight:800;fill:#fff;font-size:17px}
+.hito-sub{font-family:var(--fb);font-weight:700;fill:#FFFFFF;font-size:12px}
+.hito-g{cursor:pointer}
+.hito-g:focus-visible{outline:4px solid var(--foco);outline-offset:2px}
+@keyframes lat{0%,100%{opacity:1}50%{opacity:.45}}
+.late{animation:lat 2s ease-in-out infinite}
+
+/* ---------- Lista de ruta (alternativa textual al mapa) ---------- */
+.ruta{list-style:none;border:3px solid var(--tinta);border-radius:12px;overflow:hidden;margin-bottom:18px}
+.ruta li{display:flex;align-items:flex-start;padding:14px 16px;background:var(--papel-2);
+  border-bottom:2px solid rgba(0,0,0,.12)}
+.ruta li:last-child{border-bottom:0}
+.ruta li.hecho{background:#E7F2DC}
+.ruta li.ahora{background:#FBF0D4}
+.ruta .ic{font-family:var(--fd);font-weight:900;flex-shrink:0;margin-right:12px;width:34px;height:34px;border-radius:50%;
+  display:grid;place-items:center;background:var(--tinta);color:#fff;font-size:calc(var(--e)*.95)}
+.ruta li.hecho .ic{background:var(--verde)}
+.ruta li.ahora .ic{background:var(--rojo)}
+.ruta .nm{font-weight:700}
+.ruta .st{font-size:calc(var(--e)*.88);color:var(--tinta-2)}
+
+/* ---------- Hoja inferior ---------- */
+#hoja{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--papel);
+  border-top:4px solid var(--tinta);
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:12px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))}
+#hoja .in{max-width:720px;margin:0 auto}
+#hoja h3{margin-bottom:6px;font-size:calc(var(--e)*1.02)}
+#hoja label{margin-bottom:5px;font-size:calc(var(--e)*.88)}
+#hoja input{min-height:50px;margin-bottom:4px}
+#hoja .err{min-height:0;margin-bottom:6px;font-size:calc(var(--e)*.9)}
+#hoja .err:empty{display:none}
+#hoja .btn{margin-bottom:0;min-height:54px;padding:12px}
+
+/* ---------- Carné ---------- */
+#carne{background:linear-gradient(170deg,#FFF3DC,#F6D9A8);border:4px solid var(--madera-borde);
+  border-radius:14px;padding:22px;margin-bottom:16px;color:#2A1C0C}
+#carne .ce{font-weight:700;font-size:calc(var(--e)*.8);letter-spacing:.14em;text-transform:uppercase}
+#carne .fr{font-family:var(--fd);font-weight:900;font-size:calc(var(--e)*1.25);margin:12px 0;line-height:1.35}
+
+/* ---------- Facilitador ---------- */
+.fac{border:3px solid var(--tinta);border-radius:12px;padding:16px;margin-bottom:14px;background:var(--papel-2)}
+.clave{font-family:var(--fd);font-weight:900;font-size:calc(var(--e)*1.9);letter-spacing:.12em;
+  text-align:center;background:var(--bosque);color:#fff;border-radius:10px;padding:12px;margin:10px 0}
+.fac dl{margin:0}
+.fac dt{font-weight:700;font-size:calc(var(--e)*.85);text-transform:uppercase;letter-spacing:.08em;
+  color:var(--tinta-2);margin-top:10px}
+.fac dd{margin:2px 0 0}
+/* ---------- Evaluación ---------- */
+.esc-p{margin-bottom:16px}
+.esc-p>p{font-weight:700;margin-bottom:8px}
+.opc{display:flex}
+.opc label{flex:1 1 0;margin:0;position:relative}
+.opc label+label{margin-left:6px}
+.opc input{position:absolute;opacity:0;width:1px;height:1px;min-height:0;margin:0;padding:0}
+.opc span{display:flex;align-items:center;justify-content:center;min-height:52px;border:3px solid var(--tinta);
+  border-radius:10px;background:#fff;font-family:var(--fd);font-weight:900;font-size:calc(var(--e)*1.05);cursor:pointer;text-align:center}
+.opc input:checked+span{background:var(--verde);border-color:var(--bosque);color:#fff}
+.opc input:focus-visible+span{outline:4px solid var(--foco);outline-offset:2px}
+.extremos{display:flex;justify-content:space-between;font-size:calc(var(--e)*.8);color:var(--tinta-2);margin-top:4px}
+#envio{font-size:calc(var(--e)*.9);color:var(--tinta-2);margin:4px 0 14px}
+#envio.pend{color:#7A5A12}
+.vo{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+</style>
+
+<a class="saltar" href="#principal">Saltar al contenido</a>
+
+<header>
+  <div class="hbar gutter">
+    <span class="marca" id="marca">Nos vemos en la cumbre</span>
+    <span class="alt" id="alt">1 350 m</span>
+    <div class="ctrl">
+      <button type="button" id="bMenos" aria-label="Reducir el tamaño del texto">A−</button>
+      <button type="button" id="bMas" aria-label="Aumentar el tamaño del texto">A+</button>
+      <button type="button" id="bCon" aria-pressed="false" aria-label="Activar alto contraste">◐</button>
+    </div>
+  </div>
+  <div class="nav gutter" id="barraNav" hidden>
+    <button type="button" id="bAtras" hidden><span class="flecha" aria-hidden="true">←</span><span id="bAtrasTx">Atrás</span></button>
+    <button type="button" id="bAdelante" hidden><span id="bAdelanteTx">Adelante</span><span class="flecha" aria-hidden="true">→</span></button>
+  </div>
+</header>
+
+<main id="principal" class="gutter">
+<p class="vo" id="aviso" role="status" aria-live="polite"></p>
+
+<!-- ============ INICIO ============ -->
+<section class="pant" id="p-inicio">
+  <div id="artePortada"></div>
+  <h1>Camino a la cumbre</h1>
+  <p class="intro">Cinco tramos, tres horas y un equipo de ocho personas que hoy no conoce. Subimos el Chirripó sin salir del salón.</p>
+  <div class="caja oro">
+    <span class="et">Antes de empezar</span>
+    <p>Debajo de su silla hay una tarjeta con dos números: el de su <strong>equipo</strong> y el de su <strong>rol</strong>. Búsquela y escríbalos aquí.</p>
+  </div>
+  <label for="iEq">Número de equipo (del 1 al 30)</label>
+  <input id="iEq" type="text" inputmode="numeric" maxlength="2" autocomplete="off" placeholder="00">
+  <label for="iRol">Número de rol (del 1 al 8)</label>
+  <input id="iRol" type="text" inputmode="numeric" maxlength="1" autocomplete="off" placeholder="0">
+  <p class="err" id="eInicio" role="alert"></p>
+  <p class="nota">Lo que escriba en esta app se guarda sin su nombre y se entrega a Coocique para mejorar la formación de delegados.</p>
+  <button type="button" class="btn" id="bEntrar">Empezar la subida</button>
+  <div class="caja">
+    <span class="et">¿Su tarjeta dice Baqueano?</span>
+    <p style="margin:0">No necesita el teléfono. Guárdelo y recoja su mapa de papel en la mesa de entrada: usted tiene la información que nadie más del equipo puede ver.</p>
+  </div>
+</section>
+
+<!-- ============ ROL ============ -->
+<section class="pant" id="p-rol" hidden>
+  <div class="rotulo"><span class="placa" id="rPlaca" aria-hidden="true">00</span><span class="tx"><span class="num" id="rEq">Equipo 00</span><h2 id="rNom">Rol</h2></span></div>
+  <p class="intro" id="rDesc"></p>
+  <div class="caja verde">
+    <span class="et">Su trabajo durante toda la subida</span>
+    <p style="margin:0" id="rTarea"></p>
+  </div>
+  <div class="caja oro">
+    <span class="et">Ahora, antes de salir</span>
+    <p style="margin:0">Póngase de pie y busque a su equipo. Están sentados lejos de usted a propósito. Cuando los ocho estén juntos, siéntense.</p>
+  </div>
+  <button type="button" class="btn" id="bYaEquipo">Ya encontré a mi equipo</button>
+</section>
+
+<!-- ============ MAPA ============ -->
+<section class="pant" id="p-mapa" hidden>
+  <h2>La ruta</h2>
+  <p class="nota" style="margin-bottom:10px">Lo mismo está escrito en la lista, debajo del mapa.</p>
+  <div id="mapaWrap"><svg id="mapaSVG" viewBox="0 0 400 1180" role="img" aria-labelledby="mapaTit"><title id="mapaTit">Mapa de la subida al Cerro Chirripó con cinco tramos</title></svg></div>
+  <h3>Los cinco tramos</h3>
+  <ol class="ruta" id="listaRuta"></ol>
+</section>
+
+<!-- ============ ESTACIÓN ============ -->
+<section class="pant" id="p-est" hidden>
+  <div id="arteEst"></div>
+  <div class="rotulo"><span class="placa" id="ePlaca" aria-hidden="true">1</span><span class="tx"><span class="num" id="eNum">Tramo</span><h2 id="eTit"></h2></span></div>
+  <p class="intro" id="eIntro"></p>
+  <div class="caja oro">
+    <span class="et">La idea que se sube con usted</span>
+    <h3 id="eConc"></h3>
+    <p style="margin:0" id="eTexto"></p>
+  </div>
+  <div class="caja">
+    <span class="et">Reto individual · 4 minutos</span>
+    <p id="eInd"></p>
+    <label for="eResp" class="vo">Su respuesta al reto individual</label>
+    <textarea id="eResp" placeholder="Escriba aquí…"></textarea>
+    <p class="nota" style="margin:4px 0 0">Su respuesta se envía al tocar «Terminamos este tramo».</p>
+  </div>
+  <div class="caja verde">
+    <span class="et">Reto de equipo · 8 minutos</span>
+    <p id="eGrp"></p>
+    <p style="margin:0"><strong>Baqueano:</strong> abra su mapa de papel. Ahí está la pista que nadie más tiene.</p>
+  </div>
+  <div class="caja">
+    <span class="et">Vocero del equipo</span>
+    <p style="margin:0" id="eVoz"></p>
+  </div>
+  <button type="button" class="btn" id="bCerrar">Terminamos este tramo</button>
+</section>
+
+<!-- ============ CUMBRE ============ -->
+<section class="pant" id="p-cumbre" hidden>
+  <div id="arteCumbre"></div>
+  <div class="rotulo"><span class="placa" aria-hidden="true">5</span><span class="tx"><span class="num">Cima del Chirripó · 3 820 m</span><h2>Llegaron a la cumbre</h2></span></div>
+  <p class="intro">Tres horas y ocho personas que no se conocían. Desde aquí se ve todo el país, y también se ve la asamblea de marzo.</p>
+  <div class="caja oro">
+    <span class="et">Lo último</span>
+    <p style="margin:0">Una cosa que va a hacer distinto en la próxima asamblea. Una sola. Escríbala como si se la estuviera diciendo a la persona que lo eligió.</p>
+  </div>
+  <label for="iComp">Mi compromiso</label>
+  <textarea id="iComp" placeholder="En la próxima asamblea yo…"></textarea>
+  <button type="button" class="btn" id="bSellar">Sellar mi carné de cumbre</button>
+  <div id="carne" hidden>
+    <p class="ce">Carné de cumbre · Chirripó 3 820 m</p>
+    <h2 style="margin:6px 0 0">El Desafío Chirripó</h2>
+    <p class="ce" id="cQuien"></p>
+    <p class="fr" id="cFrase"></p>
+    <p class="ce" id="cFecha"></p>
+  </div>
+  <p class="nota" id="cNota" hidden>Tómele una foto a la pantalla. Es suyo.</p>
+
+  <div id="eval" hidden>
+    <div class="rotulo"><span class="placa" aria-hidden="true">✓</span><span class="tx"><span class="num">Antes de bajar</span><h2>¿Cómo estuvo la subida?</h2></span></div>
+    <p class="nota">Del 1 al 5, donde 1 es «nada» y 5 es «totalmente». Toma un minuto.</p>
+    <div id="escalas"></div>
+    <div class="esc-p"><p id="lRec">¿Le recomendaría este taller a otro delegado?</p>
+      <div class="opc" role="radiogroup" aria-labelledby="lRec">
+        <label><input type="radio" name="recomienda" value="Sí"><span>Sí</span></label>
+        <label><input type="radio" name="recomienda" value="Tal vez"><span>Tal vez</span></label>
+        <label><input type="radio" name="recomienda" value="No"><span>No</span></label>
+      </div></div>
+    <label for="iCom">¿Algo que quiera decirle a Coocique o a la facilitadora? <span class="nota">(opcional)</span></label>
+    <textarea id="iCom" maxlength="800"></textarea>
+    <label for="iNom" style="margin-top:10px">Su nombre <span class="nota">(opcional: si lo deja en blanco, todo llega sin nombre)</span></label>
+    <input id="iNom" type="text" maxlength="80" autocomplete="name">
+    <p class="err" id="eEval" role="alert"></p>
+    <button type="button" class="btn" id="bEval">Enviar mi evaluación</button>
+    <div class="caja verde" id="evalOk" hidden><p style="margin:0"><strong>¡Gracias!</strong> Su evaluación quedó registrada.</p></div>
+  </div>
+  <p id="envio" role="status"></p>
+  <button type="button" class="btn sec" id="bInicio">Volver al inicio</button>
+</section>
+
+<!-- ============ FACILITADOR ============ -->
+<section class="pant" id="p-fac" hidden>
+  <h2>Control de la subida</h2>
+  <p class="nota">Pantalla para la facilitadora. Las palabras se dicen en voz alta y se proyectan.</p>
+  <div id="facLista"></div>
+  <button type="button" class="btn sec" id="bSalirFac">Salir</button>
+</section>
+</main>
+
+<div id="hoja" hidden><div class="in"><div id="hojaCuerpo"></div></div></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ===================== CONTENIDO ===================== */
+var ROLES=[
+ {n:"Baqueano/a",d:"Usted conoce el terreno. No necesita el teléfono: tiene el mapa de papel, y ahí está la información que nadie más del equipo puede ver.",t:"En cada tramo, abra el mapa y léale a su equipo la pista del terreno. Sin usted no pueden resolver el reto."},
+ {n:"Capitán/a",d:"El equipo va amarrado por una sola cuerda. Si uno se queda, se quedan todos.",t:"Asegúrese de que las ocho personas hablen al menos una vez por tramo. Si alguien no ha hablado, déle el turno."},
+ {n:"Cronometrista",d:"En la montaña el tiempo no se negocia. Se sube con luz o no se sube.",t:"Avise en voz alta cuando queden dos minutos de cada reto. Corte aunque no hayan terminado."},
+ {n:"Vocero/a",d:"Lo que el equipo piensa, lo dice su voz. Y lo dice en treinta segundos.",t:"Cuando se pida en plenaria, habla usted. Nunca más de treinta segundos."},
+ {n:"Cargador/a",d:"Lo que no se anota, se pierde en la bajada.",t:"Escriba en la hoja de equipo las decisiones y las frases que valga la pena guardar."},
+ {n:"Vigía",d:"Usted mira lo que los demás no ven porque están ocupados subiendo.",t:"Observe cómo se comunican. Al final de cada tramo diga una cosa que notó. Solo lo que vio, sin juzgar."},
+ {n:"Enlace",d:"Ningún equipo sube solo. Hay otros en la montaña.",t:"Cuando se indique, busque al equipo vecino e intercambie una idea. Traiga algo de vuelta."},
+ {n:"Aliento",d:"En el tramo duro todos quieren devolverse. Alguien tiene que decir que falta poco.",t:"Cuando el equipo se atore, su trabajo es que sigan. Con humor si hace falta."}
+];
+
+var EST=[
+ {clave:"MOCHILA",alt:1350,y:1020,x:120,arte:"base",
+  nom:"San Gerardo de Rivas",
+  sub:"La mochila",
+  intro:"Todo el que sube el Chirripó pasa la noche anterior decidiendo qué mete y qué deja. Lo que carga de más, lo va a maldecir en el kilómetro nueve.",
+  conc:"Escuchar antes de cargar",
+  texto:"En una asamblea casi nadie escucha: todos esperan turno para hablar. Escuchar es poder repetir lo que el otro dijo, con sus palabras, y que él confirme que sí, que eso era.",
+  ind:"Escriba una palabra que carga a cada asamblea y que ya no le sirve. Puede ser «siempre», «nunca», «ellos».",
+  grp:"Cada quien dice su palabra en diez segundos. El equipo elige un nombre —el nombre del equipo— que salga de esas ocho palabras. El Cargador lo anota grande en la hoja.",
+  voz:"El nombre de su equipo y por qué. Treinta segundos."},
+
+ {clave:"NEBLINA",alt:2800,y:800,x:280,arte:"niebla",
+  nom:"Monte sin Fe",
+  sub:"Cuando no se ve la cima",
+  intro:"Se llama así de verdad. Es el tramo donde la neblina no deja ver la cima y todo el mundo piensa que se equivocó de vida.",
+  conc:"Los tres caminos",
+  texto:"Ante lo mismo hay tres salidas. El pasivo se traga la molestia y se va rumiando. El agresivo la suelta y rompe algo. El asertivo dice el hecho, dice lo que le pasa a él, y pide algo concreto. Los tres se sienten legítimos por dentro. Solo uno deja algo en pie.",
+  ind:"Acuérdese de una asamblea donde se quedó callado y después se arrepintió. Escriba la frase que no dijo.",
+  grp:"Elijan una de las ocho frases. Represéntenla tres veces: primero pasiva, después agresiva, después asertiva. Todos actúan, nadie mira.",
+  voz:"La versión asertiva, dicha en voz alta. Solo esa."},
+
+ {clave:"CUESTA",alt:3200,y:580,x:118,arte:"cuesta",
+  nom:"Cuesta de los Arrepentidos",
+  sub:"Decir que no",
+  intro:"También es su nombre real. Es donde la gente se devuelve. La subida no es más dura que antes: lo que cambia es que ya no queda excusa.",
+  conc:"Decir que no sin romper la relación",
+  texto:"Ser delegado es que le pidan cosas a uno. Un favor, una excepción, un dato que no le corresponde. El no que funciona tiene tres partes: se reconoce a la persona, se dice el no con la razón, y se ofrece la ruta correcta. Ninguna de las tres se puede saltar.",
+  ind:"Escriba la petición más difícil que le ha hecho un asociado por ser delegado.",
+  grp:"En parejas: uno pide, el otro dice que no con las tres partes. Luego cambian. El Vigía anota qué parte se le olvidó a cada quien.",
+  voz:"El no más difícil que resolvieron y cómo lo armaron."},
+
+ {clave:"CRESTONES",alt:3400,y:360,x:282,arte:"creston",
+  nom:"Refugio Crestones",
+  sub:"La retroalimentación",
+  intro:"Antes de la cima todos duermen en el mismo refugio. Es la única noche del año en que uno le habla claro a desconocidos, porque mañana no los vuelve a ver.",
+  conc:"Decir lo que vi, no lo que creo",
+  texto:"«Sos desordenado» es un juicio y se pelea. «Las tres últimas actas llegaron el mismo día de la sesión» es un hecho y se resuelve. La diferencia entre una junta que avanza y una que se traba casi siempre es esa.",
+  ind:"Escriba un juicio que le tiene a alguien de su junta. Ahora escríbalo otra vez, pero solo con lo que vio o escuchó.",
+  grp:"Vuelta al equipo: cada quien le dice al de la derecha una cosa que observó de él en estas dos horas. Solo hechos. Sin adjetivos.",
+  voz:"Qué se sintió distinto al quitarle los adjetivos."},
+
+ {clave:"AMANECER",alt:3820,y:150,x:200,arte:"cumbre",
+  nom:"Cima del Chirripó",
+  sub:"La asamblea",
+  intro:"Se sale del refugio a las tres de la mañana en la oscuridad para llegar arriba justo cuando sale el sol. Nadie sube de noche por gusto: se sube de noche porque el amanecer dura ocho minutos.",
+  conc:"Llevar la voz de los que no vinieron",
+  texto:"Un delegado no habla por sí mismo. Habla por gente que no está en el salón y que confía en que alguien va a decir lo que ellos dirían. Esa es la diferencia entre opinar y representar.",
+  ind:"¿Qué diría su comunidad si estuviera sentada en su silla en la próxima asamblea?",
+  grp:"Cada equipo arma una sola frase de doce palabras que resuma lo que aprendieron subiendo. Doce exactas.",
+  voz:"Las doce palabras. Se leen de pie."}
+];
+
+/* ===================== ESTADO ===================== */
+var S={eq:null,rol:null,i:-1,alt:1350,resp:{},comp:""};
+function cargar(k,d){try{var v=localStorage.getItem(k);return v===null?d:v}catch(e){return d}}
+function grabar(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+try{var g=localStorage.getItem('chirripo');if(g){S=JSON.parse(g)}}catch(e){}
+function save(){try{localStorage.setItem('chirripo',JSON.stringify(S))}catch(e){}}
+
+var $=function(id){return document.getElementById(id)};
+var fmt=function(n){return String(n).replace(/\B(?=(\d{3})+(?!\d))/g,' ')};
+function avisar(t){$('aviso').textContent=t}
+
+/* ===================== ACCESIBILIDAD ===================== */
+var ESC=[1,1.15,1.32,1.5], iEsc=parseInt(cargar('chirripo-esc','1'),10);
+if(isNaN(iEsc)||iEsc<0||iEsc>3)iEsc=1;
+function aplicarEsc(){document.documentElement.style.setProperty('--e',ESC[iEsc]+'rem');
+  $('bMenos').disabled=(iEsc===0); $('bMas').disabled=(iEsc===ESC.length-1);
+  grabar('chirripo-esc',String(iEsc))}
+$('bMenos').addEventListener('click',function(){if(iEsc>0){iEsc--;aplicarEsc();avisar('Texto más pequeño')}});
+$('bMas').addEventListener('click',function(){if(iEsc<ESC.length-1){iEsc++;aplicarEsc();avisar('Texto más grande')}});
+aplicarEsc();
+
+var alto=cargar('chirripo-con','no')==='si';
+function aplicarCon(){
+  document.documentElement.setAttribute('data-contraste',alto?'alto':'normal');
+  $('bCon').setAttribute('aria-pressed',alto?'true':'false');
+  $('bCon').setAttribute('aria-label',alto?'Desactivar alto contraste':'Activar alto contraste');
+  grabar('chirripo-con',alto?'si':'no')}
+$('bCon').addEventListener('click',function(){alto=!alto;aplicarCon();avisar(alto?'Alto contraste activado':'Alto contraste desactivado')});
+aplicarCon();
+
+/* ===================== ILUSTRACIONES ===================== */
+var cieloFondo='<rect width="400" height="200" fill="#BFE6F7"/>'+
+  '<circle cx="62" cy="40" r="17" fill="#FFF"/><circle cx="84" cy="40" r="22" fill="#FFF"/><circle cx="108" cy="42" r="15" fill="#FFF"/>'+
+  '<circle cx="300" cy="32" r="14" fill="#FFF" opacity=".9"/><circle cx="320" cy="34" r="19" fill="#FFF" opacity=".9"/>';
+
+function quetzal(x,y,s){return '<g transform="translate('+x+','+y+') scale('+s+')">'+
+  '<path d="M0 0 q-6 16 -2 30 q4 -14 10 -24 Z" fill="#1F7A4D"/>'+
+  '<circle cx="4" cy="-4" r="7" fill="#22A06B"/><circle cx="8" cy="-6" r="1.6" fill="#17202A"/>'+
+  '<path d="M10 -4 l5 2 l-5 2 Z" fill="#E8B13A"/>'+
+  '<path d="M1 2 q8 4 10 12 q-7 -3 -11 -8 Z" fill="#17894F"/>'+
+  '<path d="M2 6 q4 8 2 14 q-4 -6 -4 -12 Z" fill="#CE4436"/></g>'}
+
+var ARTE={
+base:'<svg viewBox="0 0 400 200" role="img" aria-label="Campamento base en el bosque: una carpa, mesa con mapas y mochilas, con un rótulo de madera.">'+
+ cieloFondo+
+ '<path d="M0 200 L0 118 L72 72 L130 112 L196 62 L262 108 L330 76 L400 112 L400 200 Z" fill="#6E95A8"/>'+
+ '<path d="M0 200 L0 150 L80 120 L170 152 L260 118 L340 150 L400 132 L400 200 Z" fill="#3E7A46"/>'+
+ '<rect y="162" width="400" height="38" fill="#8FB657"/>'+
+ '<g fill="#1F4D33"><path d="M22 168 L40 112 L58 168 Z"/><path d="M52 168 L68 122 L84 168 Z"/>'+
+ '<path d="M330 168 L348 116 L366 168 Z"/><path d="M360 168 L376 126 L392 168 Z"/></g>'+
+ '<path d="M176 170 L212 126 L248 170 Z" fill="#9A9B6E"/><rect x="206" y="146" width="12" height="24" fill="#6F7250"/>'+
+ '<g><rect x="100" y="150" width="56" height="7" rx="2" fill="#96642F"/>'+
+ '<rect x="104" y="157" width="5" height="16" fill="#6E4420"/><rect x="147" y="157" width="5" height="16" fill="#6E4420"/>'+
+ '<rect x="112" y="152" width="34" height="4" rx="1" fill="#CFE3F2"/></g>'+
+ '<g><rect x="268" y="150" width="20" height="24" rx="4" fill="#3E7A46"/><rect x="272" y="146" width="12" height="7" rx="3" fill="#2E5C34"/></g>'+
+ '<g><rect x="292" y="152" width="18" height="22" rx="4" fill="#CE4436"/><rect x="296" y="148" width="10" height="7" rx="3" fill="#9E3327"/></g>'+
+ '<rect x="46" y="128" width="46" height="30" rx="4" fill="#6E4420" stroke="#4A2C14" stroke-width="3"/>'+
+ '<rect x="60" y="158" width="5" height="16" fill="#4A2C14"/><rect x="74" y="158" width="5" height="16" fill="#4A2C14"/>'+
+ quetzal(348,118,1.1)+'</svg>',
+
+niebla:'<svg viewBox="0 0 400 200" role="img" aria-label="Monte sin Fe: bandas de neblina cubren el sendero y tapan la cima.">'+
+ '<rect width="400" height="200" fill="#CFEAF6"/>'+
+ '<path d="M0 200 L0 128 L60 92 L128 126 L200 86 L272 124 L340 94 L400 124 L400 200 Z" fill="#7FA9A0"/>'+
+ '<rect y="140" width="400" height="60" fill="#3E7A46"/>'+
+ '<path d="M150 200 Q186 162 180 140 Q200 150 222 140 Q218 170 250 200 Z" fill="#C9A86E"/>'+
+ '<g fill="#1F4D33"><path d="M10 160 L34 84 L58 160 Z"/><path d="M336 160 L360 88 L384 160 Z"/></g>'+
+ '<g fill="#2E6B3C"><path d="M62 164 L82 108 L102 164 Z"/><path d="M300 164 L320 112 L340 164 Z"/></g>'+
+ '<g><rect x="186" y="150" width="14" height="18" rx="4" fill="#CE4436"/><circle cx="193" cy="144" r="5" fill="#E8B98F"/>'+
+ '<rect x="188" y="168" width="4" height="12" fill="#2F3B52"/><rect x="195" y="168" width="4" height="12" fill="#2F3B52"/></g>'+
+ '<g><rect x="208" y="156" width="13" height="16" rx="4" fill="#E8B13A"/><circle cx="214" cy="151" r="4.5" fill="#8A5A3C"/>'+
+ '<rect x="210" y="172" width="4" height="10" fill="#2F3B52"/><rect x="216" y="172" width="4" height="10" fill="#2F3B52"/></g>'+
+ '<g fill="#E9F3F8"><rect x="-20" y="60" width="440" height="15" rx="8" opacity=".72"/>'+
+ '<rect x="-20" y="88" width="440" height="20" rx="10" opacity=".82"/>'+
+ '<rect x="-20" y="120" width="440" height="24" rx="12" opacity=".9"/></g>'+
+ quetzal(40,112,1.2)+'</svg>',
+
+cuesta:'<svg viewBox="0 0 400 200" role="img" aria-label="Cuesta de los Arrepentidos: una pendiente de roca con zigzags del sendero y caminantes subiendo con cuerda.">'+
+ '<rect width="400" height="200" fill="#D4EDF8"/>'+
+ '<g fill="#FFF" opacity=".8"><ellipse cx="78" cy="44" rx="40" ry="12"/><ellipse cx="320" cy="34" rx="34" ry="10"/></g>'+
+ '<path d="M0 200 L0 166 L120 128 L240 76 L340 38 L400 20 L400 200 Z" fill="#9A9AA4"/>'+
+ '<path d="M0 200 L70 178 L180 146 L300 92 L400 50 L400 200 Z" fill="#7B7B86"/>'+
+ '<path d="M0 200 L90 192 L210 172 L330 134 L400 112 L400 200 Z" fill="#C9A245"/>'+
+ '<path d="M26 186 L116 164 L70 152 L170 130 L122 118 L226 96 L182 84 L292 60" fill="none" '+
+ 'stroke="#EFD9A8" stroke-width="4" stroke-dasharray="8 7" stroke-linecap="round"/>'+
+ '<path d="M196 92 L250 70" stroke="#6E4420" stroke-width="2.5" stroke-linecap="round"/>'+
+ '<g><circle cx="192" cy="86" r="6" fill="#E8B98F"/><rect x="185" y="92" width="14" height="17" rx="4" fill="#E8B13A"/>'+
+ '<rect x="186" y="109" width="4" height="10" fill="#2F3B52"/><rect x="193" y="109" width="4" height="10" fill="#2F3B52"/></g>'+
+ '<g><circle cx="254" cy="64" r="6" fill="#8A5A3C"/><rect x="247" y="70" width="14" height="17" rx="4" fill="#CE4436"/>'+
+ '<rect x="248" y="87" width="4" height="10" fill="#2F3B52"/><rect x="255" y="87" width="4" height="10" fill="#2F3B52"/></g>'+
+ '<g fill="#3E7A46"><path d="M34 182 l8 -16 l8 16 Z"/><path d="M352 110 l7 -14 l7 14 Z"/></g>'+
+ '</svg>',
+
+creston:'<svg viewBox="0 0 400 200" role="img" aria-label="Las agujas de roca del Crestón sobre el páramo dorado, con un equipo reunido alrededor de un mapa.">'+
+ '<rect width="400" height="200" fill="#CDE9F7"/>'+
+ '<path d="M0 200 L0 150 L80 136 L180 150 L280 134 L400 152 L400 200 Z" fill="#C9A245"/>'+
+ '<rect y="176" width="400" height="24" fill="#9A7A2C"/>'+
+ '<g fill="#8A8A93"><path d="M120 178 L140 56 L158 70 L166 178 Z"/><path d="M168 178 L190 40 L212 66 L218 178 Z"/>'+
+ '<path d="M220 178 L238 62 L254 50 L266 178 Z"/></g>'+
+ '<g fill="#AAAAB4"><path d="M140 56 L158 70 L148 76 Z"/><path d="M190 40 L212 66 L198 72 Z"/><path d="M254 50 L266 92 L246 80 Z"/></g>'+
+ '<g><rect x="42" y="150" width="14" height="18" rx="4" fill="#E8B13A"/><circle cx="49" cy="144" r="5" fill="#8A5A3C"/>'+
+ '<path d="M56 154 L78 146" stroke="#6E4420" stroke-width="3" stroke-linecap="round"/></g>'+
+ '<g><rect x="78" y="142" width="14" height="18" rx="4" fill="#3E7A46"/><circle cx="85" cy="136" r="5" fill="#E8B98F"/></g>'+
+ '<g><circle cx="300" cy="156" r="6" fill="#E8B98F"/><rect x="293" y="162" width="14" height="16" rx="4" fill="#CE4436"/></g>'+
+ '<g><circle cx="326" cy="158" r="6" fill="#8A5A3C"/><rect x="319" y="164" width="14" height="14" rx="4" fill="#2F6E8C"/></g>'+
+ '<rect x="305" y="166" width="18" height="12" rx="2" fill="#FFF" stroke="#8A8A93" stroke-width="1.5"/>'+
+ '</svg>',
+
+cumbre:'<svg viewBox="0 0 400 200" role="img" aria-label="Amanecer en la cumbre del Chirripó: el sol sale detrás del pico y el equipo celebra junto al mojón de 3820 metros.">'+
+ '<defs><linearGradient id="alba" x1="0" y1="0" x2="0" y2="1">'+
+ '<stop offset="0" stop-color="#9FD6F2"/><stop offset=".55" stop-color="#F8C978"/><stop offset="1" stop-color="#F79A5B"/></linearGradient></defs>'+
+ '<rect width="400" height="200" fill="url(#alba)"/>'+
+ '<g stroke="#FBE2A8" stroke-width="3" opacity=".65">'+
+ '<path d="M200 96 L200 20"/><path d="M200 96 L132 40"/><path d="M200 96 L268 40"/>'+
+ '<path d="M200 96 L104 78"/><path d="M200 96 L296 78"/></g>'+
+ '<circle cx="200" cy="96" r="30" fill="#FFF0C4"/>'+
+ '<g fill="#FFF" opacity=".85"><ellipse cx="70" cy="128" rx="58" ry="12"/><ellipse cx="330" cy="124" rx="62" ry="13"/></g>'+
+ '<path d="M0 200 L0 146 L74 120 L144 152 L200 104 L258 150 L330 118 L400 146 L400 200 Z" fill="#8A6A3E"/>'+
+ '<path d="M200 104 L224 136 L176 136 Z" fill="#C9A245"/>'+
+ '<rect x="186" y="118" width="26" height="22" rx="2" fill="#7E7E88"/>'+
+ '<path d="M226 120 L226 92" stroke="#4A2C14" stroke-width="3"/><path d="M226 92 L262 102 L226 112 Z" fill="#CE4436"/>'+
+ '<g><circle cx="150" cy="140" r="6" fill="#E8B98F"/><rect x="143" y="146" width="14" height="16" rx="4" fill="#2F6E8C"/>'+
+ '<path d="M143 150 L132 138 M157 150 L168 138" stroke="#E8B98F" stroke-width="3.5" stroke-linecap="round"/></g>'+
+ '<g><circle cx="262" cy="142" r="6" fill="#8A5A3C"/><rect x="255" y="148" width="14" height="16" rx="4" fill="#3E7A46"/>'+
+ '<path d="M255 152 L244 140 M269 152 L280 140" stroke="#8A5A3C" stroke-width="3.5" stroke-linecap="round"/></g>'+
+ '</svg>'
+};
+$('artePortada').innerHTML=ARTE.base;
+$('arteCumbre').innerHTML=ARTE.cumbre;
+
+/* ===================== MAPA ===================== */
+var SENDA="M200 1130 C160 1080 112 1070 120 1020 C128 970 206 950 230 902 C252 858 262 836 280 800 "+
+          "C300 760 240 720 186 690 C140 664 104 622 118 580 C132 538 200 520 248 470 C276 440 272 398 282 360 "+
+          "C292 320 230 296 212 250 C204 228 202 190 200 150";
+
+function dibujarMapa(){
+  var m=$('mapaSVG');
+  var hecho=S.i, prox=S.i+1;
+  var h='<title id="mapaTit">Mapa de la subida al Cerro Chirripó con cinco tramos</title>';
+
+  h+='<defs><linearGradient id="cie" x1="0" y1="0" x2="0" y2="1">'+
+     '<stop offset="0" stop-color="#9FD6F2"/><stop offset="1" stop-color="#DCF0FA"/></linearGradient></defs>';
+  h+='<rect width="400" height="1180" fill="url(#cie)"/>';
+  h+='<circle cx="90" cy="92" r="20" fill="#FFF"/><circle cx="118" cy="92" r="26" fill="#FFF"/><circle cx="146" cy="94" r="18" fill="#FFF"/>';
+  h+='<circle cx="300" cy="212" r="16" fill="#FFF" opacity=".9"/><circle cx="324" cy="214" r="22" fill="#FFF" opacity=".9"/>';
+
+  /* cordilleras de fondo */
+  h+='<path d="M0 1180 L0 420 L58 352 L128 408 L200 300 L268 400 L336 340 L400 392 L400 1180 Z" fill="#8FB9C9"/>';
+  h+='<path d="M0 1180 L0 560 L72 492 L150 556 L224 466 L300 546 L370 486 L400 520 L400 1180 Z" fill="#6E9FA8"/>';
+
+  /* macizo */
+  h+='<path d="M-40 1180 L-40 900 L30 790 L84 828 L118 660 L160 420 L200 150 L244 430 L288 668 L322 836 L376 796 L440 906 L440 1180 Z" fill="#7B8F6A"/>';
+  h+='<path d="M200 150 L244 430 L288 668 L322 836 L376 796 L440 906 L440 1180 L200 1180 Z" fill="#6B7F5C"/>';
+  /* páramo dorado en la parte alta */
+  h+='<path d="M118 660 L160 420 L200 150 L244 430 L288 668 L256 690 L200 672 L150 692 Z" fill="#C9A245"/>';
+  /* roca del Crestón */
+  h+='<g fill="#8A8A93"><path d="M248 470 L266 330 L282 348 L292 470 Z"/><path d="M286 470 L306 316 L322 340 L330 470 Z"/></g>';
+  /* nieve/granito de la cima */
+  h+='<path d="M200 152 L226 276 L212 262 L200 290 L188 258 L174 274 Z" fill="#E6EDF2"/>';
+
+  /* bosque en la base */
+  h+='<path d="M-20 1180 L-20 1012 Q70 980 150 1006 Q240 1034 320 1000 Q380 976 420 1004 L420 1180 Z" fill="#2E6B3C"/>';
+  var i,tx,ty,hh,ww;
+  h+='<g fill="#1F4D33">';
+  for(i=0;i<24;i++){tx=-10+i*18+((i*31)%9);ty=1006+((i*23)%20);hh=30+((i*17)%20);ww=8+((i*7)%4);
+    h+='<path d="M'+(tx-ww)+' '+(ty+hh)+' L'+tx+' '+ty+' L'+(tx+ww)+' '+(ty+hh)+' Z"/>'}
+  h+='</g>';
+  h+=quetzal(44,944,1.6);
+
+  /* senda */
+  h+='<path d="'+SENDA+'" fill="none" stroke="#A98A52" stroke-width="11" stroke-linecap="round" opacity=".55"/>';
+  h+='<path d="'+SENDA+'" fill="none" stroke="#EFD9A8" stroke-width="7" stroke-linecap="round" stroke-dasharray="3 13"/>';
+  h+='<path id="senda-hecha" d="'+SENDA+'" fill="none" stroke="#CE4436" stroke-width="8" stroke-linecap="round"/>';
+
+  /* hitos */
+  for(i=0;i<EST.length;i++){
+    var e=EST[i];
+    var est = i<=hecho ? 'hecho' : (i===prox ? 'ahora' : 'cerrado');
+    var izq = e.x>200;
+    var px = izq ? e.x-172 : e.x+22;
+    var col = est==='hecho' ? '#27592F' : (est==='ahora' ? '#B8352A' : '#5C3819');
+    var op  = est==='cerrado' ? '.62' : '1';
+    var tabindex = est==='cerrado' ? '' : ' tabindex="0" role="button"';
+    var etiqueta='Tramo '+(i+1)+': '+e.nom+', '+fmt(e.alt)+' metros. '+
+      (est==='hecho'?'Completada.':(est==='ahora'?'Siguiente. Toque para abrirla.':'Bloqueada.'));
+
+    h+='<g class="hito-g" data-i="'+i+'" opacity="'+op+'"'+tabindex+' aria-label="'+etiqueta+'">';
+    /* poste y tabla de madera */
+    h+='<rect x="'+(px+16)+'" y="'+(e.y+6)+'" width="7" height="34" fill="#6E4420"/>';
+    h+='<rect x="'+px+'" y="'+(e.y-28)+'" width="150" height="40" rx="5" fill="'+col+'" stroke="#4A2C14" stroke-width="3"/>';
+    h+='<text class="hito-sub" x="'+(px+10)+'" y="'+(e.y-13)+'">TRAMO '+(i+1)+' · '+fmt(e.alt)+' M</text>';
+    h+='<text class="hito-txt" x="'+(px+10)+'" y="'+(e.y+4)+'">'+(e.nom.length>19?e.nom.slice(0,18)+'…':e.nom)+'</text>';
+    /* marcador sobre la senda */
+    h+='<circle cx="'+e.x+'" cy="'+e.y+'" r="15" fill="#FFF" stroke="'+col+'" stroke-width="5"'+
+       (est==='ahora'?' class="late"':'')+'/>';
+    if(est==='hecho'){h+='<path d="M'+(e.x-6)+' '+e.y+' l4 5 l8 -10" fill="none" stroke="#2E6B3C" stroke-width="4" stroke-linecap="round"/>'}
+    else{h+='<text x="'+e.x+'" y="'+(e.y+6)+'" text-anchor="middle" class="hito-txt" fill="'+col+'">'+(i+1)+'</text>'}
+    h+='</g>';
+  }
+
+  /* caminante */
+  var pos = S.i<0 ? {x:200,y:1120} : {x:EST[S.i].x,y:EST[S.i].y};
+  h+='<g aria-hidden="true" transform="translate('+(pos.x-8)+','+(pos.y+16)+')">'+
+     '<circle cx="8" cy="0" r="7" fill="#2F3B52"/><rect x="2" y="7" width="12" height="16" rx="5" fill="#CE4436"/>'+
+     '<rect x="3" y="23" width="4" height="10" fill="#2F3B52"/><rect x="10" y="23" width="4" height="10" fill="#2F3B52"/></g>';
+
+  m.innerHTML=h;
+
+  /* trazo rojo hasta donde han llegado */
+  var sh=m.querySelector('#senda-hecha');
+  var L=0; try{L=sh.getTotalLength()}catch(err){}
+  if(L){var frac=S.i<0?0:(S.i+1)/EST.length;
+    sh.setAttribute('stroke-dasharray',L);
+    sh.setAttribute('stroke-dashoffset',L*(1-frac));
+    sh.style.transition='stroke-dashoffset 1.8s ease'}
+
+  /* los hitos abiertos son operables con dedo y con teclado */
+  var gs=m.querySelectorAll('.hito-g[tabindex]');
+  for(i=0;i<gs.length;i++){
+    gs[i].addEventListener('click',abrirHito);
+    gs[i].addEventListener('keydown',function(ev){
+      if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();abrirHito.call(this,ev)}});
+  }
+  listaRuta();
+  pintarHoja();
+  centrarMapa(pos.y);
+}
+
+/* deja a la vista el punto donde va el equipo */
+function centrarMapa(y){
+  setTimeout(function(){
+    var w=$('mapaWrap'), svg=$('mapaSVG');
+    if(!w||!svg)return;
+    var r=svg.getBoundingClientRect().height||w.clientHeight;
+    var escala=r/1180;
+    var destino=Math.max(0,(y*escala)-w.clientHeight*0.62);
+    var suave=!window.matchMedia||!window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    try{w.scrollTo({top:destino,behavior:suave?'smooth':'auto'})}catch(e){w.scrollTop=destino}
+  },260);
+}
+
+function abrirHito(){
+  var i=parseInt(this.getAttribute('data-i'),10);
+  if(i<=S.i){S.i=i;save();verEstacion();return}
+  var c=$('iClave'); if(c){c.focus()}
+}
+
+function listaRuta(){
+  var u=$('listaRuta'),h='',i;
+  for(i=0;i<EST.length;i++){
+    var est = i<=S.i ? 'hecho' : (i===S.i+1 ? 'ahora' : '');
+    var txt = i<=S.i ? 'Completada' : (i===S.i+1 ? 'Siguiente' : 'Falta llegar');
+    h+='<li class="'+est+'"><span class="ic" aria-hidden="true">'+(i<=S.i?'✓':(i+1))+'</span>'+
+       '<span><span class="nm">'+EST[i].nom+'</span><br><span class="st">'+fmt(EST[i].alt)+' m · '+txt+'</span></span></li>';
+  }
+  u.innerHTML=h;
+}
+
+/* ===================== HOJA INFERIOR ===================== */
+function pintarHoja(){
+  var c=$('hojaCuerpo'), n=S.i+1;
+  if(n>=EST.length){
+    c.innerHTML='<h3>Llegaron a la cumbre</h3>'+
+      '<button type="button" class="btn" id="bVerCumbre">Ver la cumbre</button>';
+    $('bVerCumbre').addEventListener('click',function(){ir('p-cumbre')});
+  }else{
+    c.innerHTML='<h3>Tramo '+(n+1)+': '+EST[n].nom+'</h3>'+
+      '<label for="iClave">Escriba la palabra que se dijo en voz alta</label>'+
+      '<input id="iClave" type="text" maxlength="12" autocomplete="off" autocapitalize="characters" placeholder="palabra">'+
+      '<p class="err" id="eClave" role="alert"></p>'+
+      '<button type="button" class="btn" id="bAbrir">Desbloquear tramo</button>';
+    $('bAbrir').addEventListener('click',abrir);
+    $('iClave').addEventListener('keydown',function(ev){if(ev.key==='Enter'){abrir()}});
+  }
+  $('hoja').hidden=false;
+}
+
+function abrir(){
+  var v=($('iClave').value||'').trim().toUpperCase()
+        .replace(/[ÁÀÄÂ]/g,'A').replace(/[ÉÈËÊ]/g,'E').replace(/[ÍÌÏÎ]/g,'I')
+        .replace(/[ÓÒÖÔ]/g,'O').replace(/[ÚÙÜÛ]/g,'U');
+  var n=S.i+1;
+  if(v!==EST[n].clave){
+    $('eClave').textContent='Esa no es la palabra. Escúchela otra vez y vuelva a intentar.';
+    avisar('La palabra no es correcta.');
+    return;
+  }
+  S.i=n; S.alt=EST[n].alt; save();
+  $('alt').textContent=fmt(S.alt)+' m';
+  avisar('Tramo '+(n+1)+' desbloqueado: '+EST[n].nom);
+  verEstacion();
+}
+
+/* ===================== PANTALLAS ===================== */
+var NOMBRE={'p-inicio':'Inicio','p-rol':'Mi rol','p-mapa':'El mapa',
+            'p-est':'Mi tramo','p-cumbre':'La cumbre'};
+
+/* Las pantallas a las que esta persona ya llegó, en orden.
+   Avanzar nunca abre un tramo nuevo: eso solo lo hace la palabra. */
+function cadena(){
+  var c=['p-inicio'];
+  if(S.eq){ c.push('p-rol'); c.push('p-mapa'); }
+  if(S.i>=0) c.push('p-est');
+  if(S.i>=EST.length-1) c.push('p-cumbre');
+  return c;
+}
+
+function pintarNav(id){
+  var c=cadena(), i=c.indexOf(id);
+  var atras    = (i>0) ? c[i-1] : null;
+  /* en la portada manda el botón grande «Empezar la subida», no el de avanzar */
+  var adelante = (i>=0 && i<c.length-1 && id!=='p-inicio') ? c[i+1] : null;
+
+  $('bAtras').hidden=!atras;
+  if(atras){
+    $('bAtrasTx').textContent=NOMBRE[atras];
+    $('bAtras').setAttribute('data-ir',atras);
+    $('bAtras').setAttribute('aria-label','Atrás: '+NOMBRE[atras]);
+  }
+  $('bAdelante').hidden=!adelante;
+  if(adelante){
+    $('bAdelanteTx').textContent=NOMBRE[adelante];
+    $('bAdelante').setAttribute('data-ir',adelante);
+    $('bAdelante').setAttribute('aria-label','Adelante: '+NOMBRE[adelante]);
+  }
+  $('barraNav').hidden=(!atras&&!adelante);
+}
+
+function ir(id){
+  if(id==='p-cumbre'){ pintarEval(); pintarEnvio();
+    if(S.comp){ $('iComp').value=S.comp; $('cQuien').textContent='Equipo '+(S.eq<10?'0':'')+S.eq+' · '+ROLES[S.rol-1].n;
+      $('cFrase').textContent='«'+S.comp+'»'; $('carne').hidden=false; $('cNota').hidden=false; } }
+  var ps=document.querySelectorAll('.pant'),i;
+  for(i=0;i<ps.length;i++){ps[i].hidden=(ps[i].id!==id)}
+  $('hoja').hidden=(id!=='p-mapa');
+  pintarNav(id);
+  window.scrollTo(0,0);
+  var h=document.querySelector('#'+id+' h1, #'+id+' h2');
+  if(h){h.setAttribute('tabindex','-1');h.focus({preventScroll:true})}
+}
+
+function navegar(destino){
+  if(!destino)return;
+  /* nunca se pierde lo escrito al cambiar de pantalla */
+  if(!$('p-est').hidden && S.i>=0){ S.resp['e'+S.i]=$('eResp').value; save(); }
+  if(destino==='p-inicio'){
+    $('iEq').value=S.eq||''; $('iRol').value=S.rol||''; $('eInicio').textContent='';
+    ir('p-inicio');
+  }else if(destino==='p-mapa'){
+    ir('p-mapa'); dibujarMapa();
+  }else if(destino==='p-est'){
+    verEstacion();
+  }else{
+    ir(destino);
+  }
+  avisar(NOMBRE[destino]||'');
+}
+$('bAtras').addEventListener('click',function(){navegar(this.getAttribute('data-ir'))});
+$('bInicio').addEventListener('click',function(){navegar('p-inicio')});
+$('bAdelante').addEventListener('click',function(){navegar(this.getAttribute('data-ir'))});
+
+function pintarRol(){
+  var R=ROLES[S.rol-1];
+  $('rPlaca').textContent=(S.eq<10?'0':'')+S.eq;
+  $('rEq').textContent='Equipo '+(S.eq<10?'0':'')+S.eq;
+  $('rNom').textContent=R.n; $('rDesc').textContent=R.d; $('rTarea').textContent=R.t;
+}
+
+function verEstacion(){
+  var e=EST[S.i];
+  $('arteEst').innerHTML=ARTE[e.arte]||'';
+  $('ePlaca').textContent=String(S.i+1);
+  $('eNum').textContent='Tramo '+(S.i+1)+' · '+e.nom+' · '+fmt(e.alt)+' m';
+  $('eTit').textContent=e.sub;
+  $('eIntro').textContent=e.intro;
+  $('eConc').textContent=e.conc;
+  $('eTexto').textContent=e.texto;
+  $('eInd').textContent=e.ind;
+  $('eGrp').textContent=e.grp;
+  $('eVoz').textContent=e.voz;
+  $('eResp').value=S.resp['e'+S.i]||'';
+  ir('p-est');
+}
+
+/* ===================== EVENTOS ===================== */
+$('bEntrar').addEventListener('click',function(){
+  var q=parseInt(($('iEq').value||'').replace(/\D/g,''),10);
+  var r=parseInt(($('iRol').value||'').replace(/\D/g,''),10);
+  var er=$('eInicio');
+  if(!q||q<1||q>30){er.textContent='El número de equipo va del 1 al 30. Revise su tarjeta.';$('iEq').focus();return}
+  if(!r||r<1||r>8){er.textContent='El número de rol va del 1 al 8. Revise su tarjeta.';$('iRol').focus();return}
+  er.textContent='';
+  /* si ya venía subiendo, corregir los números no borra el avance */
+  if(S.eq===null||S.eq===undefined){ S.i=-1; S.alt=1350; S.resp={}; S.comp=''; S.cerrados=-1;
+    S.ev=null; S.evalOk=false; S.nombre=''; S.ver=0; S.verOk=0; S.id=null; }
+  if(!S.id){ S.id=nuevoId(); S.creado=new Date().toLocaleString('es-CR',{timeZone:'America/Costa_Rica'}); }
+  S.sede=S.sede||sedeActual();
+  S.eq=q;S.rol=r;save();
+  sincronizar();
+  pintarRol(); avisar('Su rol es '+ROLES[r-1].n); ir('p-rol');
+});
+
+$('bYaEquipo').addEventListener('click',function(){ir('p-mapa');dibujarMapa()});
+
+/* lo que se escribe queda guardado en el teléfono mientras se escribe; se envía al cerrar el tramo */
+$('eResp').addEventListener('input',function(){ S.resp['e'+S.i]=$('eResp').value; save(); });
+
+$('bCerrar').addEventListener('click',function(){
+  S.resp['e'+S.i]=$('eResp').value;
+  if(S.cerrados===undefined||S.i>S.cerrados) S.cerrados=S.i;
+  save(); sincronizar();
+  if(S.i>=EST.length-1){ir('p-cumbre')}else{ir('p-mapa');dibujarMapa()}
+});
+
+$('bSellar').addEventListener('click',function(){
+  var t=($('iComp').value||'').trim();
+  if(!t){$('iComp').focus();avisar('Escriba su compromiso antes de sellar el carné.');return}
+  S.comp=t; save();
+  $('cQuien').textContent='Equipo '+(S.eq<10?'0':'')+S.eq+' · '+ROLES[S.rol-1].n;
+  $('cFrase').textContent='«'+t+'»';
+  $('cFecha').textContent='3 820 m · '+new Date().toLocaleDateString('es-CR');
+  $('carne').hidden=false; $('cNota').hidden=false;
+  sincronizar(); pintarEval();
+  avisar('Carné de cumbre sellado.');
+  try{$('carne').scrollIntoView({behavior:'smooth',block:'center'})}
+  catch(e){try{$('carne').scrollIntoView()}catch(e2){}}
+});
+
+/* Modo facilitadora: cinco toques en el nombre, o #facilitadora en el enlace */
+function facilitador(){
+  var h='',i;
+  for(i=0;i<EST.length;i++){
+    var e=EST[i];
+    h+='<div class="fac"><h3>Tramo '+(i+1)+': '+e.nom+' — '+e.sub+' · '+fmt(e.alt)+' m</h3>'+
+       '<p class="clave">'+e.clave+'</p><dl>'+
+       '<dt>Individual · 4 min</dt><dd>'+e.ind+'</dd>'+
+       '<dt>Equipo · 8 min</dt><dd>'+e.grp+'</dd>'+
+       '<dt>Plenaria</dt><dd>'+e.voz+'</dd></dl></div>';
+  }
+  h+='<div class="fac"><h3>Este teléfono</h3><p style="margin:0">'+
+     (S.id?('Envíos pendientes: '+(((S.verOk||0)<(S.ver||0))?'sí, se reintenta solo':'ninguno ✓')+'<br>Conexión: '+
+     (enGoogle()?'directa a la hoja de Google':(CONFIG.ENDPOINT?'por URL configurada':'sin configurar (solo guarda aquí)'))):'Todavía no ha empezado la subida.')+'</p></div>';
+  $('facLista').innerHTML=h;
+  $('hoja').hidden=true;
+  ir('p-fac');
+}
+$('bSalirFac').addEventListener('click',function(){ir(S.eq?'p-mapa':'p-inicio');if(S.eq){dibujarMapa()}});
+var toques=0,tmr=null;
+$('marca').addEventListener('click',function(){
+  toques++; clearTimeout(tmr); tmr=setTimeout(function(){toques=0},1000);
+  if(toques>=5){toques=0;facilitador()}
+});
+
+/* ===================== ENVÍO A DRIVE =====================
+   Cada vez que la persona cierra un tramo, sella el carné o manda la evaluación,
+   se envía TODO su avance. En la hoja hay una sola fila por persona que se va
+   actualizando. Si no hay señal, queda pendiente y se reintenta solo. */
+var CONFIG={
+  /* URL /exec de Apps Script. Se usa cuando la app se abre desde GitHub (u otro sitio).
+     Si la app se abre desde Apps Script, envía directo y esta URL no se usa. */
+  ENDPOINT:'https://script.google.com/macros/s/AKfycbyte6K5qeaMx_gLi0i7NoTWcWbnUyx_DT7h90ZY_g1VCoQub4MAcmukOFrelPSaS5TlDQ/exec',
+  SEDE_DEFECTO:'Zona Norte · Vista Verde'
+};
+var ESCALAS=[
+  ['e_util',    'Lo que vi hoy me sirve para mi papel de delegado.'],
+  ['e_aplicar', 'Sé cómo aplicarlo en la próxima asamblea.'],
+  ['e_dinamica','La dinámica de la subida me ayudó a aprender.'],
+  ['e_facil',   'La facilitación fue clara y respetuosa.'],
+  ['e_global',  'En general, el taller valió la pena.']
+];
+var CLAVES_T=['mochila','neblina','cuesta','crestones','amanecer'];
+function sedeActual(){
+  var q=(location.search||'').toLowerCase().match(/sede=([a-z]+)/);
+  if(q){ if(q[1].charAt(0)==='g') return 'GAM · Crowne Plaza La Sabana';
+         if(q[1].charAt(0)==='n'||q[1].charAt(0)==='z') return 'Zona Norte · Vista Verde'; }
+  return CONFIG.SEDE_DEFECTO;
+}
+function nuevoId(){return Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,8)}
+function enGoogle(){return typeof google!=='undefined'&&google.script&&google.script.run}
+
+function avance(){
+  if(S.evalOk) return 'Cumbre · evaluación enviada';
+  if(S.comp) return 'Cumbre · carné sellado';
+  if(S.cerrados>=0) return 'Tramo '+(S.cerrados+1)+' de 5 cerrado · '+EST[S.cerrados].nom;
+  return 'Inició la subida';
+}
+function paquete(){
+  var p={id:S.id,creado:S.creado,sede:S.sede,cordada:S.eq,rol:ROLES[S.rol-1]?ROLES[S.rol-1].n:'',
+    nombre:S.nombre||'',avance:avance(),compromiso:S.comp||'',
+    recomienda:(S.ev&&S.ev.recomienda)||'',comentario:(S.ev&&S.ev.comentario)||'',
+    consentimiento:'Informado en la app (sin nombre salvo que lo escriba)',origen:'App de la subida'};
+  for(var i=0;i<5;i++){p[CLAVES_T[i]]=S.resp['e'+i]||''}
+  for(var j=0;j<ESCALAS.length;j++){p[ESCALAS[j][0]]=(S.ev&&S.ev[ESCALAS[j][0]])||''}
+  return p;
+}
+var tEnvio=null, enVuelo=false;
+/* marca que hay algo nuevo y lo manda con una espera corta al azar,
+   para que 200 teléfonos no lleguen al mismo segundo */
+function sincronizar(espera){
+  if(!S.id) return;
+  S.ver=(S.ver||0)+1; S.real=S.ver; save(); pintarEnvio();
+  programar(espera===undefined ? 1000+Math.random()*7000 : espera);
+}
+function programar(ms){clearTimeout(tEnvio); tEnvio=setTimeout(enviar,ms)}
+function enviar(){
+  if(enVuelo||!S.id||(S.verOk||0)>=(S.ver||0)) return;
+  var v=S.ver, datos=paquete();
+  function ok(){ enVuelo=false; if((S.verOk||0)<v){S.verOk=v; save()} pintarEnvio();
+                 if((S.verOk||0)<(S.ver||0)){ programar(500); return }
+                 /* Desde GitHub Google no confirma la recepción: por seguridad, cada cambio
+                    real se vuelve a mandar una vez 1-2 minutos después (no duplica filas). */
+                 if(!enGoogle() && v===S.real){ setTimeout(function(){
+                   if((S.verOk||0)>=(S.ver||0)){ S.ver=(S.ver||0)+1; save(); enviar(); } }, 45000+Math.random()*75000) } }
+  function falla(){ enVuelo=false; pintarEnvio(); programar(15000+Math.random()*30000) }
+  enVuelo=true;
+  try{
+    if(enGoogle()){ google.script.run.withSuccessHandler(ok).withFailureHandler(falla).guardar(datos); return }
+    if(!CONFIG.ENDPOINT||!window.fetch){ enVuelo=false; pintarEnvio(); return }
+    fetch(CONFIG.ENDPOINT,{method:'POST',mode:'no-cors',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(datos)}).then(ok,falla);
+  }catch(e){ falla() }
+}
+function pintarEnvio(){
+  var el=$('envio'); if(!el) return;
+  var pend=(S.verOk||0)<(S.ver||0);
+  el.className=pend?'pend':'';
+  el.textContent=!S.ver?'':(pend?'Sus respuestas están guardadas en este teléfono y se envían solas cuando haya señal.':'Sus respuestas ya llegaron a Coocique ✓');
+}
+window.addEventListener('online',function(){programar(Math.random()*5000)});
+setInterval(function(){ if((S.verOk||0)<(S.ver||0)) enviar() },60000);
+
+/* escalas de la evaluación */
+(function(){
+  var h='',i,n;
+  for(i=0;i<ESCALAS.length;i++){
+    h+='<div class="esc-p"><p id="l_'+ESCALAS[i][0]+'">'+ESCALAS[i][1]+'</p>'+
+       '<div class="opc" role="radiogroup" aria-labelledby="l_'+ESCALAS[i][0]+'">';
+    for(n=1;n<=5;n++){h+='<label><input type="radio" name="'+ESCALAS[i][0]+'" value="'+n+'"><span>'+n+'</span></label>'}
+    h+='</div><div class="extremos" aria-hidden="true"><span>Nada</span><span>Totalmente</span></div></div>';
+  }
+  $('escalas').innerHTML=h;
+})();
+function radio(nombre){var r=document.querySelectorAll('input[name="'+nombre+'"]');
+  for(var i=0;i<r.length;i++){if(r[i].checked)return r[i].value} return ''}
+function marcar(nombre,v){var r=document.querySelectorAll('input[name="'+nombre+'"]');
+  for(var i=0;i<r.length;i++){r[i].checked=(String(r[i].value)===String(v))}}
+
+function pintarEval(){
+  $('eval').hidden=!S.comp;
+  if(!S.comp) return;
+  var ev=S.ev||{};
+  for(var i=0;i<ESCALAS.length;i++){marcar(ESCALAS[i][0],ev[ESCALAS[i][0]]||'')}
+  marcar('recomienda',ev.recomienda||'');
+  $('iCom').value=ev.comentario||''; $('iNom').value=S.nombre||'';
+  $('evalOk').hidden=!S.evalOk;
+  $('bEval').textContent=S.evalOk?'Actualizar mi evaluación':'Enviar mi evaluación';
+}
+$('bEval').addEventListener('click',function(){
+  var ev={},falta=0;
+  for(var i=0;i<ESCALAS.length;i++){var v=radio(ESCALAS[i][0]); ev[ESCALAS[i][0]]=v?Number(v):''; if(!v)falta++}
+  ev.recomienda=radio('recomienda'); ev.comentario=($('iCom').value||'').trim();
+  if(falta){$('eEval').textContent='Le faltan '+falta+(falta===1?' pregunta':' preguntas')+' del 1 al 5.';avisar($('eEval').textContent);return}
+  $('eEval').textContent='';
+  S.ev=ev; S.nombre=($('iNom').value||'').trim(); S.evalOk=true;
+  sincronizar(500+Math.random()*3000);
+  pintarEval(); avisar('Evaluación enviada. Gracias.');
+});
+
+/* ===================== ARRANQUE ===================== */
+if(S.cerrados===undefined) S.cerrados=(S.i===undefined?-1:S.i-1);
+if(S.eq&&!S.id){ S.id=nuevoId(); S.creado=new Date().toLocaleString('es-CR',{timeZone:'America/Costa_Rica'}); S.sede=sedeActual(); S.ver=1; save(); }
+if((S.verOk||0)<(S.ver||0)) programar(2000+Math.random()*8000);
+if((location.hash||'').toLowerCase().indexOf('facilitadora')>-1){facilitador()}
+else if(S.eq){ pintarRol(); $('alt').textContent=fmt(S.alt)+' m'; ir('p-mapa'); dibujarMapa() }
+else{ $('hoja').hidden=true; ir('p-inicio') }
+})();
+</script>
+
+</body></html>
